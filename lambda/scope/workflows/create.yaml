@@ -5,7 +5,7 @@ steps:
     steps:
       - name: setup_dns
         type: script
-        file: "$OVERRIDES_PATH/deployment/dns/route53/setup"
+        file: "$OVERRIDES_PATH/scope/tofu/dns/route53/setup"
         output:
           - name: TOFU_VARIABLES
             type: environment
@@ -15,7 +15,7 @@ steps:
             type: environment
       - name: setup_alb
         type: script
-        file: "$OVERRIDES_PATH/deployment/networking/alb/setup"
+        file: "$OVERRIDES_PATH/scope/tofu/networking/alb/setup"
         output:
           - name: TOFU_VARIABLES
             type: environment
