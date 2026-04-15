@@ -129,33 +129,37 @@ TOFU_VARIABLES=$(echo "$TOFU_VARIABLES" | jq \
     dns_full_domain: $full_domain
   }')
 
-echo ""
-log info "   📝 Setting scope domain to '$scope_domain'..."
-
-np_output=$(np scope patch --id "$scope_id" --body "{\"domain\":\"$scope_domain\"}" --format json 2>&1)
-np_exit_code=$?
-
-if [ $np_exit_code -ne 0 ]; then
+if [ "${TOFU_ACTION:-apply}" != "destroy" ]; then
   echo ""
-  echo "   ❌ Failed to update scope domain" >&2
-  echo "" >&2
+  log info "   📝 Setting scope domain to '$scope_domain'..."
 
-  if echo "$np_output" | grep -q "unauthorized\|forbidden\|401\|403"; then
-    echo "  🔒 Error: Permission denied" >&2
+  np_output=$(np scope patch --id "$scope_id" --body "{\"domain\":\"$scope_domain\"}" --format json 2>&1)
+  np_exit_code=$?
+
+  if [ $np_exit_code -ne 0 ]; then
+    echo ""
+    echo "   ❌ Failed to update scope domain" >&2
     echo "" >&2
-    echo "  💡 Possible causes:" >&2
-    echo "    • The nullplatform API Key doesn't have 'Developer' permissions" >&2
+
+    if echo "$np_output" | grep -q "unauthorized\|forbidden\|401\|403"; then
+      echo "  🔒 Error: Permission denied" >&2
+      echo "" >&2
+      echo "  💡 Possible causes:" >&2
+      echo "    • The nullplatform API Key doesn't have 'Developer' permissions" >&2
+      echo "" >&2
+    else
+      echo "  📋 Error details:" >&2
+      echo "$np_output" | sed 's/^/    /' >&2
+    fi
+
     echo "" >&2
-  else
-    echo "  📋 Error details:" >&2
-    echo "$np_output" | sed 's/^/    /' >&2
+    return 1
   fi
 
-  echo "" >&2
-  return 1
+  log debug "   ✅ Scope domain set successfully"
+else
+  log debug "   ⏭️  Skipping scope domain patch (destroy mode)"
 fi
-
-log debug "   ✅ Scope domain set successfully"
 
 echo ""
 log info "✨ Route53 DNS configured successfully"
